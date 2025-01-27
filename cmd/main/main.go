@@ -7,7 +7,21 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 )
+
+var rootCmd = &cobra.Command{
+	Use:   "example",
+	Short: "A simple example demonstrating three required named parameters",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// If we've reached this point, Cobra has already verified that
+		// the required flags are set, but you can do additional validation here if needed.
+
+		// fmt.Printf("Arg1: %s\nArg2: %s\nArg3: %s\n", definitionPath, goHtmlTemplatePath, inputPath)
+		return nil
+	},
+}
 
 type Definition struct {
 	Key     string `json:"Key"`
@@ -88,8 +102,32 @@ func GetJsonFileAsMap(path string) (map[string]interface{}, error) {
 	return result, err
 }
 
+var (
+	definitionPath     string
+	goHtmlTemplatePath string
+	inputPath          string
+)
+
 func main() {
-	templateConfig, err := GetHTMLTemplateConfigurationFromFile("input/CoverLetterInputDefinition.json")
+	rootCmd.Flags().StringVar(&definitionPath, "definition", "", "Definition file path")
+	rootCmd.Flags().StringVar(&goHtmlTemplatePath, "gohtml", "", ".gohtml template file path")
+	rootCmd.Flags().StringVar(&inputPath, "input", "", "Input file path")
+
+	// Mark the flags as required
+	rootCmd.MarkFlagRequired("definition")
+	rootCmd.MarkFlagRequired("gohtml")
+	rootCmd.MarkFlagRequired("input")
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	definitionPath, err := rootCmd.Flags().GetString("definition")
+	goHtmlPath, err := rootCmd.Flags().GetString("gohtml")
+	inputPath, err = rootCmd.Flags().GetString("input")
+
+	templateConfig, err := GetHTMLTemplateConfigurationFromFile(definitionPath)
 	if err != nil {
 		panic(err)
 		// log.Fatal(err)
@@ -97,7 +135,7 @@ func main() {
 
 	_ = templateConfig
 
-	result, err := GetJsonFileAsMap("input/BradHannah.json")
+	result, err := GetJsonFileAsMap(inputPath) // "inputPath/BradHannah.json")
 	if err != nil {
 		panic(err)
 		// log.Fatalf("Error unmarshaling JSON: %v", err)
@@ -105,7 +143,7 @@ func main() {
 
 	// Parse the template string into a *template.Template.
 
-	tmpl, err := GetHtmlTemplate("input/BradHannahCoverLetter.gohtml")
+	tmpl, err := GetHtmlTemplate(goHtmlPath) // "inputPath/BradHannahCoverLetter.gohtml")
 
 	if err != nil {
 		panic(err)
