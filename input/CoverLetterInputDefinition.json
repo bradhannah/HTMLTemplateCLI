@@ -1,0 +1,107 @@
+{
+  "Name": "Technical Cover Letter",
+  "Description": "Cover letter for a technical position",
+  "Definitions": [
+    {
+      "Key": "Separator",
+      "Prompt": "Common separator used for concatenating common details ",
+      "Default": " | "
+    },
+    {
+      "Key": "FullName",
+      "Prompt": "First and Lastname of applicant",
+      "Example": "First Lastname"
+    },
+    {
+      "Key": "ProvinceOrState",
+      "Prompt": "Full province or state applicant resides in",
+      "Example": "Ohio"
+    },
+    {
+      "Key": "Country",
+      "Prompt": "Country applicant resides in"
+    },
+    {
+      "Key": "PhoneNumber",
+      "Prompt": "Phone number of applicant",
+      "Example": "(123) 555-1234"
+    },
+    {
+      "Key": "EmailAddress",
+      "Prompt": "Email address of applicant",
+      "Example": "myemail@example.com"
+    },
+    {
+      "Key": "LinkedInURL",
+      "Prompt": "URL of LinkedIn account",
+      "Example": "https://linkedin.com/in/Me"
+    },
+    {
+      "Key": "GitHubURL",
+      "Prompt": "URL of GitHub account",
+      "Example": "https://github.com/Me"
+    },
+    {
+      "Key": "RoleNamesTop",
+      "Prompt": "High level roles to highlight on header",
+      "Example": [
+        "AWS and Azure Cloud Architect",
+        "Solution Architect",
+        "Software Engineer"
+      ],
+      "Type": "StringList"
+    },
+    {
+      "Key": "TagLine",
+      "Prompt": "Single line, short tag line for header of cover letter",
+      "Example": "Empowering Enterprises to Build Secure, Scalable Solutions that Drive Business Results and Achieve Digital Transformation"
+    },
+    {
+      "Key": "HiringCompanyName",
+      "Prompt": "Name of company that will be used to refer to company throughout cover letter",
+      "Example": "CompanyXYZ LLC"
+    },
+    {
+      "Key": "HiringCompanyAddress",
+      "Prompt": "Road address of hiring company",
+      "Example": "123 Main St."
+    },
+    {
+      "Key": "HiringCompanyCity",
+      "Prompt": "City of the hiring company",
+      "Example": "Nowhereville"
+    },
+    {
+      "Key": "HiringCompanyState",
+      "Prompt": "Province or state of hiring company",
+      "Example": "Manitoba"
+    },
+    {
+      "Key": "HiringCompanyCountry",
+      "Prompt": "Country of hiring company",
+      "Example": "Canada"
+    },
+    {
+      "Key": "HiringManagerName",
+      "Prompt": "Full name of hiring manager",
+      "Example": "George Costanza",
+      "Default": "Hiring Manager"
+    },
+    {
+      "Key": "HiringJobFoundAt",
+      "Prompt": "Where did you hear about the job?",
+      "Example": "LinkedIn",
+      "Default": "LinkedIn"
+    },
+    {
+      "Key": "NewPositionTitle",
+      "Prompt": "Full title of new position",
+      "Example": "Solution Architect"
+    },
+    {
+      "Key": "SpecificReasonOfJob_BecauseOf",
+      "Prompt": "Finish the following sentence \"I am particularly drawn to [Company Name] because of *.......*, and I believe that my background in cloud architecture and solution consulting can significantly benefit your team.\"",
+      "Example": "your company aligns with my personal values"
+    }
+  ]
+}
