@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+
+	ht "github.com/bradhannah/HTMLTemplateCLI/pkg/html_template"
 )
 
 var rootCmd = &cobra.Command{
@@ -23,21 +28,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-type Definition struct {
-	Key     string `json:"Key"`
-	Prompt  string `json:"Prompt"`
-	Default any    `json:"Default"`
-	Type    string `json:"Type"`
-}
-
-type Definitions []Definition
-
-type HTMLTemplateConfiguration struct {
-	Name        string
-	Description string
-	Definitions Definitions
-}
-
 func stringJoin(slice interface{}, sep string) string {
 	arr, ok := slice.([]interface{})
 	if !ok {
@@ -49,18 +39,6 @@ func stringJoin(slice interface{}, sep string) string {
 		strItems = append(strItems, fmt.Sprintf("%v", item))
 	}
 	return strings.Join(strItems, sep)
-}
-
-func GetHTMLTemplateConfigurationFromFile(path string) (*HTMLTemplateConfiguration, error) {
-	configDataBytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var result HTMLTemplateConfiguration
-	if err := json.Unmarshal(configDataBytes, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
 }
 
 func GetHtmlTemplate(path string) (*template.Template, error) {
@@ -106,17 +84,67 @@ var (
 	definitionPath     string
 	goHtmlTemplatePath string
 	inputPath          string
+	outputPath         string
 )
+
+func promptAndWaitForAnswer(definition ht.Definition, separator string) (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	done := false
+	var input string
+
+	for !done {
+		fmt.Printf("Field Details: %s\n", definition.Prompt)
+		if definition.Type == "" {
+			fmt.Print("Type: String\n")
+		} else {
+			fmt.Printf("Type: %s\n", definition.Type)
+		}
+		if definition.Type != "" {
+			fmt.Printf("Default (press enter): %s\n", definition.Default)
+		}
+
+		fmt.Print("User Input: ")
+		var err error
+		input, err = reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error reading input:", err)
+			return "", err
+		}
+		input = strings.TrimSpace(input)
+
+		if input == "" && definition.Default != "" {
+			s, isString := definition.Default.(string)
+			if isString {
+				return s, nil
+			}
+			sl, isStringList := definition.Default.([]string)
+			if isStringList {
+				return strings.Join(sl, separator), nil
+			}
+			fmt.Print("Error, default input unknown")
+			return "", errors.New("unknown input")
+		}
+		fmt.Println("")
+		if input == "" {
+			continue
+		}
+		done = true
+	}
+	return input, nil
+}
 
 func main() {
 	rootCmd.Flags().StringVar(&definitionPath, "definition", "", "Definition file path")
 	rootCmd.Flags().StringVar(&goHtmlTemplatePath, "gohtml", "", ".gohtml template file path")
 	rootCmd.Flags().StringVar(&inputPath, "input", "", "Input file path")
+	rootCmd.Flags().StringVar(&outputPath, "output", "", "HTML output file path")
 
 	// Mark the flags as required
-	rootCmd.MarkFlagRequired("definition")
-	rootCmd.MarkFlagRequired("gohtml")
-	rootCmd.MarkFlagRequired("input")
+	_ = rootCmd.MarkFlagRequired("definition")
+	_ = rootCmd.MarkFlagRequired("gohtml")
+	_ = rootCmd.MarkFlagRequired("input")
+	_ = rootCmd.MarkFlagRequired("output")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -126,8 +154,9 @@ func main() {
 	definitionPath, err := rootCmd.Flags().GetString("definition")
 	goHtmlPath, err := rootCmd.Flags().GetString("gohtml")
 	inputPath, err = rootCmd.Flags().GetString("input")
+	outputPath, err := rootCmd.Flags().GetString("output")
 
-	templateConfig, err := GetHTMLTemplateConfigurationFromFile(definitionPath)
+	templateConfig, err := ht.GetHTMLTemplateConfigurationFromFile(definitionPath)
 	if err != nil {
 		panic(err)
 		// log.Fatal(err)
@@ -141,7 +170,19 @@ func main() {
 		// log.Fatalf("Error unmarshaling JSON: %v", err)
 	}
 
-	// Parse the template string into a *template.Template.
+	for _, definition := range templateConfig.Definitions {
+		// loop through and see if any of the inputs are missing
+		// if they are missing then we will do a CLI prompt
+
+		answer, found := result[definition.Key]
+		if !found {
+			answer, err = promptAndWaitForAnswer(definition, goHtmlTemplatePath)
+			if err != nil {
+				panic(err)
+			}
+			result[definition.Key] = answer
+		}
+	}
 
 	tmpl, err := GetHtmlTemplate(goHtmlPath) // "inputPath/BradHannahCoverLetter.gohtml")
 
@@ -149,7 +190,14 @@ func main() {
 		panic(err)
 	}
 
-	if err := tmpl.Execute(os.Stdout, &result); err != nil {
+	outputFile, err := os.Create(outputPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Make sure we close the file when we're done
+	defer outputFile.Close()
+
+	if err := tmpl.Execute(outputFile, &result); err != nil {
 		panic(err)
 	}
 }
